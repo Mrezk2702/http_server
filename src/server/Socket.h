@@ -185,18 +185,15 @@ public:
     ssize_t send_all(const void* buffer, size_t length) {
         size_t total_sent = 0;
         while (total_sent < length) {
-            /*passing 0 as the flag means if the client disconnects 
-            mid-send, the kernel raises SIGPIPE which kills your
-             process by default. MSG_NOSIGNAL turns that into a returnable 
-             -1 + errno = EPIPE instead.*/
-
-             
-            ssize_t sent = ::send(fd_,
-                                 static_cast<const char*>(buffer) + total_sent,
-                                 length - total_sent,
-                                 MSG_NOSIGNAL);
-            if (sent <= 0) {
-                return -1;
+            ssize_t sent = ::send(fd_, 
+                                 (const char*)buffer + total_sent,
+                                 length - total_sent, 
+                                 0);
+            if (sent < 0) {
+                return -1;  // Error
+            }
+            if (sent == 0) {
+                return -1;  // Connection closed
             }
             total_sent += sent;
         }
